@@ -7,7 +7,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/PizzaStruct/TenseiAPI?style=flat-square)](https://github.com/PizzaStruct/TenseiAPI/stargazers)
 [![GitHub license](https://img.shields.io/github/license/PizzaStruct/TenseiAPI?style=flat-square)](https://github.com/PizzaStruct/TenseiAPI)
 
-![Rikka](rikka.gif)
+![img](img.gif)
 
 ## License
 
