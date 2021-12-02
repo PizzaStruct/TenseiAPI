@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,11 +21,13 @@ func Run() {
 	if err := mongodb.Connect(); err != nil {
 		panic(err)
 	}
+	log.Println("Connected to mongodb")
 
 	server.Run()
+	log.Printf("Server running on port %s\n", os.Getenv("PORT"))
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	out := <-sig
-	fmt.Printf("\n\rProgram stopped at %d, signal: %s\n\r", time.Now().Unix(), out.String())
+	log.Printf("\n\rProgram stopped at %d, signal: %s\n\r", time.Now().Unix(), out.String())
 }
