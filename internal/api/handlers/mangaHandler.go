@@ -6,15 +6,16 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/PizzaStruct/TenseiAPI/internal/pkg/dto"
 	"github.com/PizzaStruct/TenseiAPI/internal/pkg/models"
 	"github.com/PizzaStruct/TenseiAPI/internal/pkg/repos"
+	"github.com/PizzaStruct/TenseiAPI/pkg/helpers"
 	"github.com/gorilla/mux"
 )
 
 type IMangaHandler interface {
 	GetManga(w http.ResponseWriter, r *http.Request)
 	GetMangas(w http.ResponseWriter, r *http.Request)
-	SearchMangas(w http.ResponseWriter, r *http.Request)
 	InsertMangas(w http.ResponseWriter, r *http.Request)
 	RemoveManga(w http.ResponseWriter, r *http.Request)
 }
@@ -46,21 +47,13 @@ func (mh *MangaHandler) GetMangas(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 	mangaRepo := repos.NewMangaRepo()
-	mangas := mangaRepo.GetMangas(int64(page))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(mangas)
-}
-
-func (mh *MangaHandler) SearchMangas(w http.ResponseWriter, r *http.Request) {
-	page_str := r.URL.Query().Get("page")
-	page, err := strconv.Atoi(page_str)
-	if err != nil {
-		page = 1
+	query := r.URL.Query().Get("search")
+	var mangas dto.RepoPageResult
+	if query != "" {
+		mangas = mangaRepo.SearchManga(query, int64(page))
+	} else {
+		mangas = mangaRepo.GetMangas(int64(page))
 	}
-	query := r.URL.Query().Get("query")
-	mangaRepo := repos.NewMangaRepo()
-	mangas := mangaRepo.SearchManga(query, int64(page))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(mangas)
@@ -73,7 +66,15 @@ func (mh *MangaHandler) InsertMangas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var manga models.Manga
-	json.Unmarshal(body, &manga)
+	err = json.Unmarshal(body, &manga)
+	if err != nil {
+		http.Error(w, "Bad request", 400)
+		return
+	}
+	if err := helpers.ValidateStruct(manga); err != nil {
+		http.Error(w, "Bad request", 400)
+		return
+	}
 	mangaRepo := repos.NewMangaRepo()
 	if err := mangaRepo.InsertManga(&manga); err != nil {
 		http.Error(w, "Bad request", 400)

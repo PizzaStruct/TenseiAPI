@@ -13,7 +13,6 @@ func InitRouter() http.Handler {
 
 	router.HandleFunc("/mangas", mangaHandler.GetMangas).Methods("GET")
 	router.HandleFunc("/mangas/{id}", mangaHandler.GetManga).Methods("GET")
-	router.HandleFunc("/mangas/search", mangaHandler.SearchMangas).Methods("GET")
 	router.HandleFunc("/mangas", mangaHandler.InsertMangas).Methods("POST")
 	router.HandleFunc("/mangas/{id}", mangaHandler.RemoveManga).Methods("DELETE")
 
