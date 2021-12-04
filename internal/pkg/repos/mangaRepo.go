@@ -3,7 +3,9 @@ package repos
 import (
 	"context"
 	"errors"
+	"log"
 	"math"
+	"strings"
 
 	"github.com/PizzaStruct/TenseiAPI/internal/pkg/dto"
 	"github.com/PizzaStruct/TenseiAPI/internal/pkg/models"
@@ -38,6 +40,7 @@ func (mr *MangaRepo) GetManga(id_hex string) (models.Manga, error) {
 		return manga, errors.New("manga not found")
 	}
 	mr.db.Collection("mangas").FindOne(context.Background(), bson.M{"_id": id}).Decode(&manga)
+	log.Printf("returning manga with objectId %s", id_hex)
 	return manga, nil
 }
 
@@ -49,6 +52,7 @@ func (mr *MangaRepo) GetMangas(page int64) dto.RepoPageResult {
 	cursor, _ := mr.db.Collection("mangas").Find(context.Background(), bson.M{}, filter)
 	cursor.All(context.Background(), &mangas)
 	totalPages := int64(math.Ceil(float64(count) / float64(pageSize)))
+	log.Printf("returning mangas page %d", page)
 	return dto.RepoPageResult{
 		TotalPages: totalPages,
 		HasNext:    page < totalPages,
@@ -66,6 +70,7 @@ func (mr *MangaRepo) SearchManga(q string, page int64) dto.RepoPageResult {
 	cursor, _ := mr.db.Collection("mangas").Find(context.Background(), filter, opts)
 	cursor.All(context.Background(), &mangas)
 	totalPages := int64(math.Ceil(float64(count) / float64(pageSize)))
+	log.Printf("returning manga with search query = %s, page %d", q, page)
 	return dto.RepoPageResult{
 		TotalPages: totalPages,
 		HasNext:    page < totalPages,
@@ -79,9 +84,10 @@ func (mr *MangaRepo) GetMangasByGenre(genre string, page int64) dto.RepoPageResu
 	var pageSize int64 = 100
 	filter := options.Find().SetSort(bson.M{"title": 1}).SetSkip((page - 1) * pageSize).SetLimit(pageSize)
 	count, _ := mr.db.Collection("mangas").CountDocuments(context.Background(), bson.M{})
-	cursor, _ := mr.db.Collection("mangas").Find(context.Background(), bson.M{"genres": bson.M{"$in": genre}}, filter)
+	cursor, _ := mr.db.Collection("mangas").Find(context.Background(), bson.M{"genres": bson.M{"$in": []string{strings.ToLower(genre)}}}, filter)
 	cursor.All(context.Background(), &mangas)
 	totalPages := int64(math.Ceil(float64(count) / float64(pageSize)))
+	log.Printf("returning manga with genre = %s, page %d", genre, page)
 	return dto.RepoPageResult{
 		TotalPages: totalPages,
 		HasNext:    page < totalPages,
@@ -92,7 +98,11 @@ func (mr *MangaRepo) GetMangasByGenre(genre string, page int64) dto.RepoPageResu
 
 func (mr *MangaRepo) InsertManga(manga *models.Manga) error {
 	manga.ID = primitive.NewObjectID()
+	for i := 0; i < len(manga.Genres); i++ {
+		manga.Genres[i] = strings.ToLower(manga.Genres[i])
+	}
 	_, err := mr.db.Collection("mangas").InsertOne(context.Background(), manga)
+	log.Printf("added new manga %s", manga.Title)
 	return err
 }
 
@@ -102,5 +112,6 @@ func (mr *MangaRepo) RemoveManga(id_hex string) error {
 		return err
 	}
 	_, err = mr.db.Collection("mangas").DeleteOne(context.Background(), bson.M{"_id": id})
+	log.Printf("removed manga with objectId %s", id_hex)
 	return err
 }

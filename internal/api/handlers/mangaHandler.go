@@ -16,6 +16,7 @@ import (
 type IMangaHandler interface {
 	GetManga(w http.ResponseWriter, r *http.Request)
 	GetMangas(w http.ResponseWriter, r *http.Request)
+	GetMangasByGenre(w http.ResponseWriter, r *http.Request)
 	InsertMangas(w http.ResponseWriter, r *http.Request)
 	RemoveManga(w http.ResponseWriter, r *http.Request)
 }
@@ -54,6 +55,20 @@ func (mh *MangaHandler) GetMangas(w http.ResponseWriter, r *http.Request) {
 	} else {
 		mangas = mangaRepo.GetMangas(int64(page))
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(mangas)
+}
+
+func (mth *MangaHandler) GetMangasByGenre(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	page_str := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(page_str)
+	if err != nil {
+		page = 1
+	}
+	mangaRepo := repos.NewMangaRepo()
+	mangas := mangaRepo.GetMangasByGenre(vars["genre"], int64(page))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(mangas)

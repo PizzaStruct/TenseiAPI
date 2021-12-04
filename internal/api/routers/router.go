@@ -9,12 +9,15 @@ import (
 
 func InitRouter() http.Handler {
 	router := mux.NewRouter().StrictSlash(true)
+
+	mangaRouter := router.PathPrefix("/mangas").Subrouter()
 	mangaHandler := handlers.NewMangaHandler()
 
-	router.HandleFunc("/mangas", mangaHandler.GetMangas).Methods("GET")
-	router.HandleFunc("/mangas/{id}", mangaHandler.GetManga).Methods("GET")
-	router.HandleFunc("/mangas", mangaHandler.InsertMangas).Methods("POST")
-	router.HandleFunc("/mangas/{id}", mangaHandler.RemoveManga).Methods("DELETE")
+	mangaRouter.HandleFunc("/", mangaHandler.GetMangas).Methods("GET")
+	mangaRouter.HandleFunc("/{id}", mangaHandler.GetManga).Methods("GET")
+	mangaRouter.HandleFunc("/genre/{genre}", mangaHandler.GetMangasByGenre).Methods("GET")
+	mangaRouter.HandleFunc("/", mangaHandler.InsertMangas).Methods("POST")
+	mangaRouter.HandleFunc("/{id}", mangaHandler.RemoveManga).Methods("DELETE")
 
 	return router
 }
